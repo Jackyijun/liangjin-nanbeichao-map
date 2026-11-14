@@ -2,11 +2,11 @@
 #
 # 中文是源文本。每一条要显示的中文都有一个“键/字段”，英文按同样的键写在 content/en/*.json 里：
 #
-#   units.json    政权、都护府、部族       {"唐": {"n": 全称, "s": 地图短名（可省）, "note": 说明}}
-#   labels.json   节点里的当年别名         {"唐公李渊": "Li Yuan, Duke of Tang"}
-#   seeds.json    州郡城邑                 {"雍州": {"mod": 今地, "n": {"雍州": …, "京兆郡": …}}}
-#   items.json    条目（键为 类别:古名，同名者加 @政权 或 @今地）  {"battle:浅水原之战": {"old", "mod", "note", "yt", "sides", "cmd", "p": {路线地名: …}}}
-#   snaps.json    时间节点（键为 年-月）    {"618-05": {"era": 年号, "t": 标题, "d": 说明}}
+#   units.json    政权、方镇、部族         {"晋": {"n": 全称, "s": 地图短名（可省）, "note": 说明}}
+#   labels.json   节点里的当年别名         {"魏（翟魏）": "Wei (Zhai Wei)"}
+#   seeds.json    郡县城邑（键为点的 ID）   {"雍州": {"mod": 今地, "n": {"长安": …, "雍州": …}}}
+#   items.json    条目（键为 类别:古名，同名者加 @政权 或 @今地）  {"battle:淝水之战": {"old", "mod", "note", "yt", "sides", "cmd", "p": {路线地名: …}}}
+#   snaps.json    时间节点（键为年份）      {"383": {"era": 年号, "era2": 北方或另一方年号, "t": 标题, "d": 概述}}
 #   misc.json     今省名                   {"prov": {"河南": "Henan"}}
 #
 # zh.lock.json 记着每条英文写成时对应中文的指纹（sha1 前 10 位）。中文改了而英文没改，就是“过期”。
@@ -58,6 +58,12 @@ def item_keys(data):
     return out
 
 
+def shown_seeds(geo, data):
+    """要显示名称的归属点：仅分区的点（t == 'r'）不显示，但被某节点用作治所的除外。"""
+    seat = {v for s in geo['snaps'] for v in s.get('seat', {}).values()}
+    return [i for i, s in enumerate(data['seeds']) if s['t'] != 'r' or i in seat]
+
+
 def snap_key(s):
     return f"{s['y']}-{s['m']:02d}" if s.get('m') else str(s['y'])
 
@@ -70,8 +76,8 @@ def required(geo, data):
         if u.get('note'): req.append(('units', (u['k'], 'note'), u['note']))
     labs = sorted({v for s in geo['snaps'] for v in s['lab'].values()})
     for v in labs: req.append(('labels', (v,), v))
-    for s in data['seeds']:
-        if s['t'] == 'r': continue
+    for i in shown_seeds(geo, data):
+        s = data['seeds'][i]
         if s.get('mod'): req.append(('seeds', (s['id'], 'mod'), s['mod']))
         names = [s['n']] + [n for _, n in (s.get('nm') or [])]
         for n in dict.fromkeys(names): req.append(('seeds', (s['id'], 'n', n), n))
@@ -79,13 +85,12 @@ def required(geo, data):
     for it, k in zip(data['items'], IK):
         for f in ITEM_FIELDS:
             if it.get(f): req.append(('items', (k, f), it[f]))
-    R = geo.get('route')
-    if R:
+    for R in geo.get('routes', []):    # 路线：各点地名记在该路线条目的 p 下
         k = IK[R['it']]
         for p in dict.fromkeys(p[3] for p in R['pts']): req.append(('items', (k, 'p', p), p))
     for s in geo['snaps']:
         y = snap_key(s)
-        for f in ('era', 't', 'd'):
+        for f in ('era', 'era2', 't', 'd'):
             if s.get(f): req.append(('snaps', (y, f), s[f]))
     for p in geo.get('prov', []): req.append(('misc', ('prov', p['n']), p['n']))
     return req
@@ -124,21 +129,21 @@ def attach(geo, data, en=None):
         s = g('units', u['k'], 's')
         if s: u['se'] = s
         u['notee'] = g('units', u['k'], 'note') or u.get('note', '')
-    for s in data['seeds']:
-        if s['t'] == 'r': continue
+    for i in shown_seeds(geo, data):
+        s = data['seeds'][i]
         s['ne'] = g('seeds', s['id'], 'n', s['n']) or s['n']
         if s.get('nm'): s['nme'] = [g('seeds', s['id'], 'n', n) or n for _, n in s['nm']]
         s['mode'] = g('seeds', s['id'], 'mod') or s.get('mod', '')
     IK = item_keys(data)
     for it, k in zip(data['items'], IK):
         it['e'] = {f: (g('items', k, f) or it[f]) for f in ITEM_FIELDS if it.get(f)}
-    R = geo.get('route')
-    if R:
+    for R in geo.get('routes', []):
         k = IK[R['it']]
         R['pe'] = [g('items', k, 'p', p[3]) or p[3] for p in R['pts']]
     for s in geo['snaps']:
         y = snap_key(s)
         s['erae'] = g('snaps', y, 'era') or s.get('era', '')
+        if s.get('era2'): s['era2e'] = g('snaps', y, 'era2') or s['era2']
         s['te'] = g('snaps', y, 't') or s['t']
         s['de'] = g('snaps', y, 'd') or s.get('d', '')
         s['labe'] = {u: (g('labels', v) or v) for u, v in s['lab'].items()}

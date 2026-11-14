@@ -76,7 +76,8 @@ def build(BASE, SEEDS):
     for it in IT.TS:
         if it['c'] != 'river' or it['old'] in IT.DEL_RIVER: continue
         d = dict(it); d.pop('i')
-        d['note'] = IT.RIVER_NOTE.get(it['old'], it.get('note', ''))
+        d['note'] = IT.RIVER_NOTE.get(f"{it['old']}@{it.get('mod', '')}", IT.RIVER_NOTE.get(it['old'], it.get('note', '')))
+        if it['old'] in IT.RIVER_FIX: d['old'], d['mod'] = IT.RIVER_FIX[it['old']]
         ts_map[it['i']] = add(d)
     anc_of = {}
     for r in BASE['rivers']:

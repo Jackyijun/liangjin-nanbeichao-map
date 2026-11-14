@@ -1,14 +1,14 @@
 # 两晋十六国南北朝形势图
 
-280—581 年，从西晋灭吴统一到隋文帝代周，122 个时间节点：八王之乱、永嘉之乱、五胡十六国、东晋与南朝宋齐梁陈、北魏统一北方、东西魏与北齐北周，直到隋朝建立。视野西至东罗马与萨珊波斯，北至漠北草原，南至狮子国与南海诸国，凡与华夏有往来的都画在图上。含方镇着色、15 条行军与行程路线（祖逖北伐、法显西行、刘裕北伐、侯景之乱等）、古今地名对照、年表与对照表。单文件网页，无外部依赖。
+[![中文](https://img.shields.io/badge/lang-%E4%B8%AD%E6%96%87-red.svg)](README.md) [![English](https://img.shields.io/badge/lang-English-blue.svg)](README.en.md)
+
+280—581 年，从西晋灭吴统一到隋文帝代周，122 个时间节点：八王之乱、永嘉之乱、五胡十六国、东晋与南朝宋齐梁陈、北魏统一北方、东西魏与北齐北周，直到隋朝建立。视野西至东罗马与萨珊波斯，北至漠北草原，南至狮子国与南海诸国，凡与华夏有往来的都画在图上。含方镇着色、15 条行军与行程路线（祖逖北伐、法显西行、刘裕北伐、侯景之乱等）、古今地名对照、年表与对照表，中英双语。单文件网页，无外部依赖。
 
 本图与《汉末三国形势图》《隋及唐初形势图》首尾相接：280 年节点照搬《汉末三国形势图》末节点的疆域、颜色与国名，581 年节点照搬《隋及唐初形势图》首节点，三卷连起来看不出换了图（见第五节「两端衔接」）。
 
-本轮先交中文版；英文版待名称审定后再做，届时补 `content/en/` 与 `README.en.md`，界面右上角出现「中 | EN」。
-
 ## 一、直接看
 
-用浏览器打开 `docs/index.html` 即可，离线可用。
+用浏览器打开 `docs/index.html` 即可，离线可用。右上角「中 | EN」切换中英文。
 
 - **时间轴**：每个节点一格，格下写当年的晋、南朝年号，北方诸国年号写在说明栏开头；刻度圆点虚线圈为西晋、实线圈为东晋十六国、方点为南北朝。▶ 播放，旁边的「1× / 2×」切换倍速；键盘 ← → 逐个节点走。
 - **着色**：「政权」按政权分色；「方镇」把西晋诸王、东晋南朝的方镇、北魏末年的尔朱氏与高欢等单独着色。斜线为名义臣属、实则自立；虚线疆域为部族。
@@ -29,6 +29,7 @@ pip install -r requirements.txt
 python run.py                 # 全部重建，约 1.5 分钟，输出 docs/index.html
 python run.py --html          # 只改了 content/ 的归属或文字：沿用已算好的疆域，约半分钟
 python run.py --open          # 构建后在浏览器打开
+python run.py --html --draft  # 英文有缺译或过期时也先出页面（缺译处显示中文）；默认严格，会停下
 python run.py --preview 383   # 另出该年疆域草图 build/preview-383.png
 ```
 
@@ -42,7 +43,8 @@ python run.py --preview 383   # 另出该年疆域草图 build/preview-383.png
 liangjin-nanbeichao-map/
 ├── run.py              一键构建
 ├── requirements.txt    numpy、scipy、shapely ≥ 2.1、scikit-image、matplotlib
-├── README.md           说明
+├── README.md           说明（中文）
+├── README.en.md        英文说明，与 README.md 一一对应
 ├── docs/
 │   ├── index.html      成品，单文件
 │   └── .nojekyll
@@ -57,7 +59,8 @@ liangjin-nanbeichao-map/
 │   ├── snaps_nanbei.py 南北朝 442—581（43 个）
 │   ├── items.py        关隘、山脉、河湖、运河、荒漠的按语（沿用唐宋图几何，按本期改写）
 │   ├── items_hist.py   都城 87、战役 108、事件 65、诸族 24、行军与行程路线 15
-│   └── frontier.py     全图外缘（东段、北段沿用隋唐图，向西、向南放宽）
+│   ├── frontier.py     全图外缘（东段、北段沿用隋唐图，向西、向南放宽）
+│   └── en/             英文译文（units、labels、seeds、items、snaps、misc 六个 json）、zh.lock.json 指纹与 GLOSSARY.md 译名体例
 ├── src/
 │   ├── config.py       全部路径与可调参数
 │   ├── fetch_data.py   校验 geodata/，缺失时从 GitHub 下载固定版本
@@ -67,14 +70,15 @@ liangjin-nanbeichao-map/
 │   ├── compile_data.py 各节点归属 → 疆域多边形 → GEO / DATA；衔接节点照搬邻卷；配色
 │   ├── items_build.py  条目汇编：都城、战役、事件、山川、路线、诸族
 │   ├── proj.py         Albers 等积圆锥投影（与页面一致）
-│   ├── i18n.py         英文版：检查缺译与过期、把译文并入数据（第二轮用）
-│   ├── assemble.py     注入模板，输出 docs/index.html（没有 content/en/ 时只出中文版）
+│   ├── i18n.py         英文版：检查缺译与过期、把译文并入数据
+│   ├── assemble.py     并入英文、检查缺译，注入模板，输出 docs/index.html
 │   └── template.html   前端
 ├── geodata/            底图与两端衔接数据，随仓库附带，离线可构建
 │   ├── junction_hanmo280.json    《汉末三国形势图》280 年节点的疆域环、颜色、国名
 │   └── junction_suitang581.json  《隋及唐初形势图》581 年节点的疆域环、颜色、国名
 ├── tools/
 │   ├── junction.py     从两张邻图的仓库重新取衔接数据
+│   ├── i18n.py         英文维护：status / todo / lock / table
 │   └── preview.py      matplotlib 疆域草图
 └── build/              中间产物
 ```
@@ -113,10 +117,16 @@ python run.py
 - **改按语、战役、事件、都城、路线**：编辑 `content/items_hist.py`、`items.py` 或 `units.py`，`python run.py --html`。路线的点写成（经度, 纬度, 年 + 月/12, 地名）。
 - **改外缘**：编辑 `content/frontier.py`，`python run.py`。
 - **改样式或交互**：编辑 `src/template.html`，`python run.py --html`。
+- **改了中文文字**，同时改对应的英文并运行 `python tools/i18n.py lock`，否则构建会停下（见下节）。
 
 ## 七、英文版
 
-本轮只有中文：仓库里还没有 `content/en/`，构建时不查缺译，页面隐藏「中 | EN」。第二轮照《宋辽夏金元形势图》的做法补英文——政权、郡县、条目、节点标题等名称先交审定，再译按语与概述；译文写在 `content/en/*.json`，`src/i18n.py` 负责并入与检查缺译、过期，届时另加 `README.en.md`。
+页面右上角「中 | EN」切换，默认中文；网址加 `#en` 直接打开英文，选择记在本机（localStorage 键 `liangjin-nanbeichao-map:lang`）。英文模式下地图只标英文，悬停说明、索引、年表、对照表在英文名后附汉字原名；北方年号、两端衔接说明、视野名与图例脚注都有英文。
+
+- **译文**：写在 `content/en/`——`units.json` 政权、方镇、部族（全称、地图短名、说明），`labels.json` 节点里的当年别名，`seeds.json` 郡县城邑（今地与各时期名称），`items.json` 条目（键为「类别:古名」，同名的加 @政权 或 @今地；路线各点地名记在 p 下），`snaps.json` 节点（年号、北方年号、标题、概述），`misc.json` 今省名。构建时由 `src/i18n.py` 并入。
+- **防过期**：`content/en/zh.lock.json` 记下每条英文所据中文的指纹（sha1 前 10 位）。中文一改、英文没跟着改，构建就报「过期」停下；`python run.py --html --draft` 可先出草稿。
+- **维护**：`python tools/i18n.py status` 查缺译、过期条数；`todo` 列出待译中文；`lock` 在改完英文后登记指纹；`table` 导出中英对照表 `build/i18n-review.tsv`。
+- **体例**：见 `content/en/GLOSSARY.md`。与汉末三国、隋及唐初两卷同名同译；州作政区译 X Province，作州治地名照隋唐卷连写（Yongzhou）；农历月照写（3rd month, 383），不换算公历；同名战役补年份。
 
 ## 八、调参
 
